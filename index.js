@@ -118,7 +118,6 @@ function addEmployee() {
                 "Account Manager",
                 "Accountant",
                 "Legal Team Lead",
-                "Janitor",
                 "Copy Machine Guy"
             ]
         },
