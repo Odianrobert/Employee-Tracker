@@ -34,11 +34,7 @@ inquirer.prompt ([
             "Add an employee",
             "Add a department",
             "Add a role",
-            "Update employee role",
-            "Update employee manager",
             "Remove an employee",
-            "Remove a role",
-            "View all employees by manager"
         ]
     }
 ]).then(userChoice => {
@@ -61,20 +57,8 @@ inquirer.prompt ([
         case "Add a role":
             addRole();//DONE
             break;
-        case "Update employee role":
-            updateEmployee();
-            break;
-        case "Update employee manager":
-            updateManager();
-            break;
         case "Remove an employee":
-            removeEmployee();
-            break;
-        case "Remove a role":
-            removeRole();
-            break;
-        case "View all employees by manager":
-            viewByManager(); 
+            removeEmployee();//DONE
             break;
     }
 });
@@ -138,40 +122,6 @@ function addEmployee(result) {
             name: "managerId",
             message: "What is the employees manager's ID?"
         }
-        // {
-            //     type: "list",
-        //     name: "addEmployeeRole",
-        //     message: "What is the employee's role?",
-        //     choices: [
-            //         "Sales Lead",
-        //         "Salesperson",
-        //         "Lead Engineer",
-        //         "Software Engineer",
-        //         "Account Manager",
-        //         "Accountant",
-        //         "Legal Team Lead",
-        //         "Copy Machine Guy"
-        //     ]
-        // },
-        // {
-        //     type: "list",
-        //     name: "addEmployeeManager",
-        //     message: "Who is the employee's manager?",
-        //     choices: [
-        //         "1",
-        //         "2",
-        //         "3",
-        //         "null"
-        //     ],
-        
-        // {
-        //     type: "list",
-        //     name: "addRoleId",
-        //     choices: role.id.map(role => {
-        //         role.title
-        //         console.log(role.title);
-        //     })
-        // },
     ]).then(function (answer) {
         console.log(answer);
   
@@ -193,49 +143,26 @@ function addEmployee(result) {
           });
       });
   }
-//     ]).then(({ addFirstName, addLastName, roleID,addEmployeeManager }) => {
-//     roleID = process.argv[2]; 
-//     // let empId;
-//     // result.map(finds => {
-//         // if(finds.title === addRoleId) {
-//         //   empId = finds.id;
-//     connection.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES(?,?,?,?)',
-
-//         { 
-//             first_name: addFirstName, 
-//             last_name: addLastName,
-//             role_id: roleID,
-//             manager_id: addEmployeeManager
-//         }),
-//         console.log(addEmployeeManager);
-//         console.log(`\n Success! You added a new employee: with first name of ${addFirstName}, \n With a last name of ${addLastName}`)
-//         addToTracker()
-//     }
-//     //  }
-//     )
-// //  })    
-// };
 
 function addDepartment() {
     inquirer.prompt (
         {
             type: "input",
-            name: "addDepartment",
-            message: "What department would you like to add?",
-            answer: ""
+            name: "department_name",
+            message: "What department would you like to add?"            
         }
-    ).then(({ addDepartment}) => {
-        connection.query('INSERT INTO department SET ?', {
-            name: addDepartment
+    ).then(function (answer) {
+        console.log(answer);
+        var query = 'INSERT INTO department SET ?' 
+        connection.query(query,
+            {
+            department_name: answer.department_name
       },
-
-      console.log(`\n Success! You added a new department: ${addDepartment}`)
-      );
-
-      connection.query('SELECT * FROM department', function(err, result) {
-        if(err) throw err;
-        console.table(result);
-        addToTracker()
+        function (err, res) {
+              if (err) throw err;
+              console.table(res);
+              console.log("Inserted successfully!\n");
+              addToTracker();
     });
 })      
 };
@@ -288,78 +215,50 @@ function addRole() {  //adds a new column to the table
 }
 
 function removeEmployee() {
-    inquirer.prompt ([
-        {
-            type: "list",
-            name: "removeEmployee",
-            message: "Which employee would you like to remove?",
-            choices: [
-                "Employee A",
-                "Employee B",
-                "Employee C",
-                "Employee D",
-                "Employee E",
-                "Employee F"
-            ]
-        },
+    console.log("Deleting an employee");
+  
+    var query =
+      `SELECT e.id, e.first_name, e.last_name
+        FROM employee e`
+  
+    connection.query(query, function (err, res) {
+      if (err) throw err;
+  
+      const deleteEmployeeChoices = res.map(({ id, first_name, last_name }) => ({
+        value: id, name: `${id} ${first_name} ${last_name}`
+      }));
+  
+      console.table(res);
+      console.log("ArrayToDelete!\n");
+  
+      promptDelete(deleteEmployeeChoices);
+    });
+  }
+
+function promptDelete(deleteEmployeeChoices) {
+    inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "employeeId",
+        message: "Which employee do you want to remove?",
+        choices: deleteEmployeeChoices
+      }
     ])
-};
+    .then(function (answer) {
 
-function removeRole() {
-    inquirer.prompt ([
-        {
-            type: "list",
-            name: "removeRole",
-            message: "Which role would you like to remove?",
-            choices: [
-                "Sales Lead",
-                "Salesperson",
-                "Lead Engineer",
-                "Software Engineer",
-                "Account Manager",
-                "Accountant",
-                "Legal Team Lead",
-                "Janitor",
-                "Copy Machine Guy"
-            ]
-        },
-    ])
-};
+      var query = `DELETE FROM employee WHERE ?`;
+      // when finished prompting, insert a new item into the db with that info
+      connection.query(query, { id: answer.employeeId }, function (err, res) {
+        if (err) throw err;
 
-function updateEmployee() {
-    inquirer.prompt ([
-        {
-            type: "list",
-            name: "updateEmployee",
-            message: "Which employee would you like to update?",
-            // choices: filter.map(role => role.title)
-        },
-    ])
-};
+        console.table(res);
+        console.log(res.affectedRows + "Deleted!\n");
 
-function updateManager() {
-    inquirer.prompt ([
-        {
-            type: "list",
-            name: "updateManager",
-            message: "Which manager would you like to update?",
-            choices: [
-                "Employee A",
-                "Employee B",
-                "Employee C",
-                "Employee D",
-                "Employee E",
-                "Employee F"
-            ]
-        },
-    ])
-};
-
-function viewByManager() {
-    // Display employees by manager;
-    addToTracker()
-};
-
+        addToTracker();
+      });
+    });
+}
 }
 
 addToTracker()
